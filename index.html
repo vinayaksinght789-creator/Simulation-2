@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BJT RC Phase Shift Oscillator Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#E8EDF1;--paper:#F7F9FA;--ink:#14233B;--mute:#5B6B80;--line:#C6D0DA;--scope:#0D1822;
+--c1:#4FD1E8;--c2:#FFB547;--c3:#7BE08A;--c4:#F078C0;--btn:#14233B}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Schibsted Grotesk",system-ui,sans-serif;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 20px 48px}
+h1{font-size:clamp(1.6rem,3.2vw,2.3rem);margin:0 0 6px;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 24px;max-width:68ch}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:18px}
+.panel h2{font-size:1rem;margin:0 0 12px}
+svg.ckt{width:100%;height:auto;display:block}
+svg .w{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+svg .b{fill:var(--paper);stroke:var(--ink);stroke-width:2}
+svg .d{fill:var(--ink)}
+svg text{font-family:"Schibsted Grotesk",sans-serif;font-size:13px;fill:var(--ink)}
+svg .sm{font-size:11px;fill:var(--mute)}
+svg .tag{font-weight:700;font-size:12px}
+.live .pulse{animation:p 1s ease-in-out infinite}
+@keyframes p{50%{opacity:.25}}
+.main{display:grid;grid-template-columns:290px 1fr;gap:18px;align-items:start}
+@media(max-width:860px){.main{grid-template-columns:1fr}}
+label{display:block;font-size:.85rem;font-weight:600;margin:14px 0 4px}
+label span{float:right;font-family:"IBM Plex Mono",monospace;font-weight:500;color:var(--mute)}
+select,input[type=range]{width:100%}
+select{padding:8px;border:1px solid var(--line);border-radius:6px;background:#fff;font:inherit;color:var(--ink)}
+input[type=range]{accent-color:var(--ink)}
+.seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.seg label{flex:1;margin:0;text-align:center;cursor:pointer;font-weight:500;background:#fff}
+.seg input{position:absolute;opacity:0}
+.seg span{display:block;float:none;font-family:inherit;color:inherit;padding:7px 4px}
+.seg input:checked+span{background:var(--ink);color:#fff}
+.seg input:focus-visible+span{outline:3px solid var(--c2);outline-offset:-3px}
+button{margin-top:20px;width:100%;padding:13px;border:0;border-radius:8px;background:var(--btn);color:#fff;font:600 1rem "Schibsted Grotesk",sans-serif;cursor:pointer}
+button:hover{background:#22385C}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--c2);outline-offset:2px}
+button:disabled{opacity:.6;cursor:wait}
+.scope{background:var(--scope);border-radius:10px;padding:10px;border:6px solid #2A3A4A}
+canvas{width:100%;height:480px;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 4px 2px;font-size:.82rem;color:#B8C6D4}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:14px}
+.read div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.read small{display:block;color:var(--mute);font-size:.75rem}
+.read b{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:1rem}
+.notes{color:var(--mute);font-size:.9rem;max-width:80ch}
+.notes p{margin:.4em 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>BJT RC phase shift oscillator</h1>
+<p class="sub">A common-emitter transistor gives 180° of phase shift and a three-stage RC ladder adds the other 180°. Choose the ladder, the transistor gain and the bias point, then press Simulate to watch it start up.</p>
+
+<div class="panel">
+<h2>Circuit diagram</h2>
+<svg id="ckt" class="ckt" viewBox="0 0 820 430" role="img" aria-label="Common-emitter BJT RC phase shift oscillator with voltage-divider bias, emitter resistor and bypass capacitor, and a three-stage RC ladder from collector to base">
+<!-- supply rail -->
+<path class="w" d="M120 40H400"/><text x="70" y="45">+Vcc</text>
+<!-- R1 R2 bias -->
+<path class="w" d="M170 40V70M170 114V175M170 219V240M158 240H182M163 246H177M168 252H172"/>
+<rect class="b" x="162" y="70" width="16" height="44"/><rect class="b" x="162" y="175" width="16" height="44"/>
+<text x="188" y="96">R1</text><text x="188" y="202">R2</text>
+<circle class="d" cx="170" cy="160" r="4"/>
+<!-- base wire -->
+<path class="w" d="M170 160H335"/><circle class="d" cx="220" cy="160" r="4"/>
+<!-- transistor -->
+<circle class="b" cx="358" cy="160" r="38" style="fill:none"/>
+<path class="w" d="M335 138V182M335 150L375 124M335 170L375 196"/>
+<polygon class="d" points="369,184 376,197 363,193"/>
+<text x="396" y="164">Q1</text>
+<!-- Rc -->
+<path class="w" d="M375 40V56M375 100V124"/><rect class="b" x="367" y="56" width="16" height="44"/><text x="392" y="84">Rc</text>
+<circle class="d" cx="375" cy="112" r="4"/>
+<!-- emitter -->
+<path class="w" d="M375 196V228M375 228V235M375 275V290M363 290H387M368 296H382M373 302H377M375 228H430M430 228V242M415 242H445M415 252H445M430 252V290M418 290H442M423 296H437M428 302H432"/>
+<rect class="b" x="367" y="235" width="16" height="40"/><circle class="d" cx="375" cy="228" r="4"/>
+<text x="392" y="260">Re</text><text x="452" y="250">Ce</text>
+<!-- collector bus -->
+<path class="w" d="M375 112H520V340"/>
+<!-- ladder -->
+<path class="w" d="M520 340H480M470 340H420M420 340H380M370 340H320M320 340H280M270 340H220M220 340V160"/>
+<path class="w" d="M480 325V355M470 325V355M380 325V355M370 325V355M280 325V355M270 325V355"/>
+<path class="w" d="M420 340V355M420 395V405M408 405H432M413 411H427M418 417H422M320 340V355M320 395V405M308 405H332M313 411H327M318 417H322M220 340V355M220 395V405M208 405H232M213 411H227M218 417H222"/>
+<rect class="b" x="412" y="355" width="16" height="40"/><rect class="b" x="312" y="355" width="16" height="40"/><rect class="b" x="212" y="355" width="16" height="40"/>
+<text x="436" y="380">R</text><text x="336" y="380">R</text><text x="236" y="380">R</text>
+<text x="468" y="316">C</text><text x="368" y="316">C</text><text x="268" y="316">C</text>
+<circle class="d" cx="420" cy="340" r="4"/><circle class="d" cx="320" cy="340" r="4"/><circle class="d" cx="220" cy="340" r="4"/><circle class="d" cx="520" cy="340" r="0"/>
+<!-- tags -->
+<g class="tag">
+<circle class="pulse" cx="520" cy="112" r="8" fill="none" stroke="#4FD1E8" stroke-width="3"/><text x="534" y="108" style="fill:#1B8CA3">CH1 Vc (collector)</text>
+<circle class="pulse" cx="420" cy="340" r="8" fill="none" stroke="#FFB547" stroke-width="3"/><text x="394" y="300" style="fill:#B87500;display:none">CH2</text><text x="396" y="332" style="fill:#B87500;display:none">V1</text>
+<circle class="pulse" cx="320" cy="340" r="8" fill="none" stroke="#7BE08A" stroke-width="3"/>
+<circle class="pulse" cx="220" cy="340" r="8" fill="none" stroke="#F078C0" stroke-width="3"/>
+<text x="428" y="300" style="fill:#B87500">CH2 V1</text><text x="328" y="300" style="fill:#2F8F3F">CH3 V2</text><text x="150" y="332" style="fill:#B03C86">CH4 Vb</text></g>
+<text x="600" y="200" id="lbl">Rc = 4.7 kΩ   R = 2.2 kΩ</text>
+<text x="600" y="220" class="sm" id="lbl2"></text><text x="600" y="238" class="sm" id="lbl3"></text>
+<text x="600" y="256" class="sm" id="lbl4"></text>
+</svg>
+</div>
+
+<div class="main">
+<div class="panel">
+<h2>Parameters</h2>
+<label for="R">Ladder resistor R <span id="RV">2.2 kΩ</span></label>
+<input id="R" type="range" min="0.5" max="20" step="0.1" value="2.2">
+<label for="C">Ladder capacitor C</label>
+<select id="C">
+<option value="1e-8">10 nF</option><option value="4.7e-8">47 nF</option><option value="1e-7" selected>100 nF</option><option value="1e-6">1 µF</option>
+</select>
+<label for="RC">Collector resistor Rc <span id="RCV">4.7 kΩ</span></label>
+<input id="RC" type="range" min="1" max="10" step="0.1" value="4.7">
+<label for="H">Transistor gain hFE <span id="HV">70</span></label>
+<input id="H" type="range" min="30" max="300" step="5" value="70">
+<label for="V">Supply Vcc <span id="VV">12 V</span></label>
+<input id="V" type="range" min="5" max="20" step="1" value="12">
+<label for="Q">Collector bias Vc <span id="QV">50% of Vcc</span></label>
+<input id="Q" type="range" min="30" max="85" step="1" value="50">
+<label>Time window</label>
+<div class="seg">
+<label><input type="radio" name="view" value="start" checked><span>Start-up</span></label>
+<label><input type="radio" name="view" value="steady"><span>Steady state</span></label>
+</div>
+<button id="go">Simulate</button>
+</div>
+
+<div>
+<div class="scope">
+<canvas id="cv" aria-label="Oscilloscope waveform output"></canvas>
+<div class="legend"><span><i style="background:var(--c1)"></i>CH1 collector</span><span><i style="background:var(--c2)"></i>CH2 after stage 1</span><span><i style="background:var(--c3)"></i>CH3 after stage 2</span><span><i style="background:var(--c4)"></i>CH4 base (stage 3)</span></div>
+</div>
+<div class="read">
+<div><small>Oscillation frequency</small><b id="rF">–</b></div>
+<div><small>Period</small><b id="rT">–</b></div>
+<div><small>hFE needed</small><b id="rN">–</b></div>
+<div><small>Ic / Vce (idle)</small><b id="rB">–</b></div>
+<div><small>Collector swing</small><b id="rA">–</b></div>
+<div><small>Result</small><b id="rS">–</b></div>
+</div>
+</div>
+</div>
+
+<div class="panel notes" style="margin-top:18px">
+<h2>How it works</h2>
+<p>The common-emitter stage inverts the signal (180°). With K = Rc/R, the loaded ladder shifts the phase by another 180° at f = 1 / (2π·R·C·√(6 + 4K)). The transistor needs hFE ≥ 23 + 29/K + 4K, which bottoms out at about 44.5 when K ≈ 2.7. That is why a BJT oscillator needs far more gain than the 29 of an op-amp one: the collector resistor loads the ladder.</p>
+<p>When hFE is above the minimum, the oscillation grows until the collector hits the supply or saturation, so the top and bottom of the wave flatten, and moving the bias point makes the clipping lopsided. Below the minimum it decays. Bias resistors are calculated automatically (divider current of ten times the base current, emitter at 10% of Vcc), and the ladder's loading of the base bias network is ignored. This is a simplified model, not a full SPICE run.</p>
+</div>
+</div>
+
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const cv=$('cv'),ctx=cv.getContext('2d');
+const cols=['#4FD1E8','#FFB547','#7BE08A','#F078C0'];
+const names=['CH1 Vc','CH2 V1','CH3 V2','CH4 Vb'];
+let data=null,scales=[1,1,1,1],dcs=[0,0,0,0],win=40,period=1,raf=0;
+
+const fmtF=f=>f>=1e3?(f/1e3).toFixed(3)+' kHz':f.toFixed(1)+' Hz';
+const fmtT=t=>t>=1?t.toFixed(2)+' s':t>=1e-3?(t*1e3).toPrecision(3)+' ms':(t*1e6).toPrecision(3)+' µs';
+const fmtV=v=>Math.abs(v)>=1?v.toFixed(2)+' V':(v*1e3).toFixed(Math.abs(v)>=.01?0:1)+' mV';
+const fmtR=r=>r>=1e3?(r/1e3).toFixed(r>=1e4?1:2)+' kΩ':r.toFixed(0)+' Ω';
+const fmtC=c=>c>=1e-6?(c*1e6)+' µF':(c*1e9)+' nF';
+
+const mul=(a,b)=>[a[0]*b[0]-a[1]*b[1],a[0]*b[1]+a[1]*b[0]];
+const add=(a,b)=>[a[0]+b[0],a[1]+b[1]];
+const div=(a,b)=>{const d=b[0]*b[0]+b[1]*b[1];return[(a[0]*b[0]+a[1]*b[1])/d,(a[1]*b[0]-a[0]*b[1])/d]};
+const par=(a,b)=>div(mul(a,b),add(a,b));
+function ladder(w,R,C){
+ const Zc=[0,-1/(w*C)],r=[R,0];
+ const Zin3=add(Zc,r),P2=par(r,Zin3),Zin2=add(Zc,P2),P1=par(r,Zin2),Zin1=add(Zc,P1);
+ const a=div(P1,Zin1),b=mul(a,div(P2,Zin2)),c=mul(b,div(r,Zin3));
+ return[a,b,c];
+}
+function params(){
+ const R=+$('R').value*1e3,C=+$('C').value,Rc=+$('RC').value*1e3,hfe=+$('H').value,Vcc=+$('V').value,pc=+$('Q').value/100;
+ const Vq=pc*Vcc,Ve=0.1*Vcc,Vb=Ve+0.7,Ic=(Vcc-Vq)/Rc,Ib=Ic/hfe,Ie=Ic+Ib;
+ const Re=Ve/Ie,R2=Vb/(10*Ib),R1=(Vcc-Vb)/(11*Ib),K=Rc/R;
+ return{R,C,Rc,hfe,Vcc,Vq,Ve,Vb,Ic,Re,R1,R2,K,Vce:Vq-Ve,need:23+29/K+4*K};
+}
+function labels(){
+ const p=params();
+ $('RV').textContent=fmtR(p.R);$('RCV').textContent=fmtR(p.Rc);$('HV').textContent=p.hfe;
+ $('VV').textContent=p.Vcc+' V';$('QV').textContent=$('Q').value+'% of Vcc';
+ $('lbl').textContent='Rc = '+fmtR(p.Rc)+'   R = '+fmtR(p.R)+'   C = '+fmtC(p.C);
+ $('lbl2').textContent='R1 = '+fmtR(p.R1)+'   R2 = '+fmtR(p.R2);
+ $('lbl3').textContent='Re = '+fmtR(p.Re)+'   Ce bypasses Re';
+ $('lbl4').textContent='Vcc = '+p.Vcc+' V   hFE = '+p.hfe;
+}
+['R','C','RC','H','V','Q'].forEach(k=>$(k).addEventListener('input',labels));
+
+function simulate(){
+ const p=params();
+ const steady=document.querySelector('input[name=view]:checked').value==='steady';
+ const f=1/(2*Math.PI*p.R*p.C*Math.sqrt(6+4*p.K));period=1/f;
+ const H=ladder(2*Math.PI*f,p.R,p.C);
+ const mag=H.map(h=>Math.hypot(h[0],h[1])),ph=H.map(h=>Math.atan2(h[1],h[0]));
+ const ratio=p.hfe/p.need,g=1.2*(ratio-1),cap=ratio,a0=g>0?0.005:0.5;
+ const up=p.Vcc-p.Vq,dn=Math.max(0.05,p.Vq-p.Ve-0.2);
+ const N=1600;
+ win=steady?6:(g>0?Math.min(120,Math.max(25,7.2/g)):40);
+ const u0=steady?60:0;
+ const ch=[[],[],[],[]];let lo=1e9,hi=-1e9;
+ for(let i=0;i<N;i++){
+  const u=i/(N-1)*win+u0;
+  const al=a0*Math.exp(g*u);
+  const a=g>0?cap*Math.tanh(al/cap):al;
+  const th=2*Math.PI*(i/(N-1)*win);
+  const x=Math.max(-1,Math.min(1,-a*Math.sin(th)));
+  const vc=p.Vq+(x>0?x*up:x*dn);
+  ch[0].push(vc);lo=Math.min(lo,vc);hi=Math.max(hi,vc);
+  const amp=Math.min(up,dn)*a;
+  for(let k=0;k<3;k++)ch[k+1].push((k===2?0.7:0)-amp*mag[k]*Math.sin(th+ph[k]));
+ }
+ data=ch;dcs=[p.Vq,0,0,0.7];
+ scales=ch.map((c,k)=>Math.max(1e-3,1.1*Math.max(...c.map(v=>Math.abs(v-dcs[k])))));
+ const st=ratio<0.995?'Decaying':ratio<1.02?'Marginal':p.Vce<0.5?'Saturated':ratio>1.05?'Sustained, clipped':'Sustained sine';
+ $('rF').textContent=fmtF(f);$('rT').textContent=fmtT(1/f);
+ $('rN').textContent=p.need.toFixed(1)+' (set '+p.hfe+')';
+ $('rB').textContent=(p.Ic*1e3).toFixed(2)+' mA / '+p.Vce.toFixed(1)+' V';
+ $('rA').textContent=fmtV(hi-lo)+' pk-pk';$('rS').textContent=st;
+}
+
+function size(){
+ const r=window.devicePixelRatio||1,w=cv.clientWidth,h=cv.clientHeight;
+ cv.width=w*r;cv.height=h*r;ctx.setTransform(r,0,0,r,0,0);return[w,h];
+}
+function draw(p){
+ const[w,h]=size(),L=76,R=12,T=8,B=30,lh=(h-T-B)/4,pw=w-L-R;
+ ctx.clearRect(0,0,w,h);
+ ctx.font='11px "IBM Plex Mono",monospace';
+ for(let c=0;c<4;c++){
+  const y0=T+c*lh,pad=12,sc=scales[c],dc=dcs[c],yy=v=>y0+lh/2-((v-dc)/sc)*(lh/2-pad);
+  ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;
+  for(let i=0;i<=10;i++){const x=L+pw*i/10;ctx.beginPath();ctx.moveTo(x,y0);ctx.lineTo(x,y0+lh);ctx.stroke()}
+  ctx.strokeStyle='rgba(255,255,255,.2)';
+  ctx.beginPath();ctx.moveTo(L,yy(dc));ctx.lineTo(L+pw,yy(dc));ctx.stroke();
+  ctx.fillStyle=cols[c];ctx.textAlign='left';ctx.fillText(names[c],6,y0+16);
+  ctx.fillStyle='#7C8CA0';
+  if(data){ctx.fillText('DC '+dc.toFixed(1)+' V',6,y0+30);ctx.textAlign='right';ctx.fillText('±'+fmtV(sc).replace(' ',''),L-6,y0+pad+14)}
+  if(data){
+   const n=Math.floor(p*data[c].length);
+   ctx.strokeStyle=cols[c];ctx.lineWidth=1.8;ctx.shadowColor=cols[c];ctx.shadowBlur=5;ctx.beginPath();
+   for(let i=0;i<n;i++){const x=L+pw*i/(data[c].length-1),y=yy(data[c][i]);i?ctx.lineTo(x,y):ctx.moveTo(x,y)}
+   ctx.stroke();ctx.shadowBlur=0;
+  }
+ }
+ ctx.fillStyle='#7C8CA0';ctx.textAlign='center';ctx.font='11px "IBM Plex Mono",monospace';
+ ctx.fillText(data?'time/div: '+fmtT(win*period/10)+'   total: '+fmtT(win*period)+'   (each lane autoscaled around its DC level)':'',L+pw/2,h-8);
+ if(!data){ctx.fillStyle='#B8C6D4';ctx.font='600 15px "Schibsted Grotesk",sans-serif';ctx.fillText('Press Simulate to start the oscillator',L+pw/2,h/2)}
+}
+function run(){
+ cancelAnimationFrame(raf);simulate();
+ const btn=$('go');btn.disabled=true;btn.textContent='Simulating…';
+ $('ckt').classList.add('live');
+ const t0=performance.now(),dur=matchMedia('(prefers-reduced-motion: reduce)').matches?1:2800;
+ (function step(now){
+  const p=Math.min(1,(now-t0)/dur);draw(p);
+  if(p<1)raf=requestAnimationFrame(step);
+  else{btn.disabled=false;btn.textContent='Simulate again';$('ckt').classList.remove('live')}
+ })(t0);
+}
+$('go').addEventListener('click',run);
+window.addEventListener('resize',()=>draw(1));
+labels();draw(1);
+})();
+</script>
+</body>
+</html>
